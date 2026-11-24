@@ -1,0 +1,34 @@
+/* Login, brugere og mobil – OS Group udbudsplatform */
+body.ub-noauth .app{display:none}
+body:not(.ub-noauth) #ub-auth{display:none}
+#ub-auth{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px}
+.ub-card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 50px rgba(16,24,40,.08);padding:28px;width:min(400px,100%)}
+.ub-card h1{font-size:22px;margin:8px 0 14px}
+.ub-card label{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:12px 0 4px}
+.ub-card input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:var(--card);color:var(--tx)}
+.ub-logo{display:block;height:48px;width:auto;max-width:100%;margin:0 auto}
+.ub-sub{text-align:center;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:8px 0 6px}
+.ub-full{width:100%;margin-top:18px;padding:12px}
+.ub-link{all:unset;cursor:pointer;display:block;margin:14px auto 0;color:var(--pri);font-size:14px}
+.ub-p{color:var(--mut);font-size:14px;margin:4px 0 10px}
+.ub-msg{padding:10px 12px;border-radius:10px;font-size:14px;margin:0 0 10px}.ub-msg.bad{background:var(--badl);color:var(--bad)}.ub-msg.ok{background:var(--okl);color:var(--ok)}
+.ub-foot{margin-top:18px;font-size:12px;color:var(--mut)}.ub-foot a{color:inherit}
+.ub-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ub-who{font-weight:600;font-size:14px}
+#ub-users{width:min(720px,calc(100% - 20px))}
+.ub-umb{display:block!important}
+.ub-urow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)}
+.ub-uinfo{flex:1;min-width:180px}.ub-uinfo small{display:block;color:var(--mut)}
+.ub-uact{display:flex;gap:6px;flex-wrap:wrap}.ub-me{color:var(--mut)}
+.ub-inv{margin-top:18px}.ub-ig{display:grid;grid-template-columns:1fr 1.4fr auto auto;gap:8px}
+.ub-ig input,.ub-ig select{padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--card);color:var(--tx);min-width:0}
+.ub-imp{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}.ub-imp summary{cursor:pointer;font-weight:600}
+.ub-pre{white-space:pre-wrap;font-size:13px;color:var(--mut);margin:10px 0 0}
+@media(max-width:760px){
+  .ub-ig{grid-template-columns:1fr}
+  .hd{flex-wrap:wrap;gap:8px}
+  nav#nav{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  nav#nav::-webkit-scrollbar{display:none}
+  nav#nav button{white-space:nowrap;flex:0 0 auto}
+  dialog{width:calc(100% - 16px)!important;max-width:none!important;max-height:calc(100vh - 16px)}
+}
+@media(max-width:760px){.hd .hl img{max-height:38px;width:auto}.hd .ht{font-size:17px}.hd .hl{gap:10px;min-width:0}}
