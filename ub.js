@@ -206,6 +206,7 @@
       else if (a === 'import') runImport();
     } catch (err) { alert(err.message || err) }
   });
+  document.addEventListener('change', e => { if (e.target && e.target.id === 'ub-ifile' && e.target.files[0]) runImport() });
   document.addEventListener('keydown', e => {
     if (e.key !== 'Enter' || !document.body.classList.contains('ub-noauth')) return;
     const b = $('#ub-auth [data-ub="login"], #ub-auth [data-ub="setpw"]'); if (b) { e.preventDefault(); b.click() }
