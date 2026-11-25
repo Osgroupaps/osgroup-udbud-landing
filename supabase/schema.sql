@@ -70,6 +70,8 @@ grant select, insert, update, delete on public.udbud_members, public.udbud_docs 
 grant execute on function public.udbud_merge(text, text, jsonb) to authenticated;
 grant execute on function public.udbud_is_member() to authenticated;
 grant execute on function public.udbud_is_admin() to authenticated;
+grant all on public.udbud_members, public.udbud_docs to service_role;
+grant execute on function public.udbud_merge(text, text, jsonb), public.udbud_is_member(), public.udbud_is_admin() to service_role;
 
 -- ---------- live-opdatering ----------
 do $$ begin

@@ -9,13 +9,20 @@ const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: 
 Deno.serve(async req => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   try {
-    const url = Deno.env.get('SUPABASE_URL')!, anon = Deno.env.get('SUPABASE_ANON_KEY')!, srv = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const url = Deno.env.get('SUPABASE_URL')!, anon = Deno.env.get('SUPABASE_ANON_KEY')!
+    // Hemmelig nøgle: nye projekter bruger SUPABASE_SECRET_KEYS, ældre SUPABASE_SERVICE_ROLE_KEY
+    let srv = ''
+    try { const k = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') || '{}'); srv = k.default || Object.values(k)[0] as string || '' } catch { /* ingen */ }
+    if (!srv) srv = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     const authed = createClient(url, anon, { global: { headers: { Authorization: req.headers.get('Authorization') || '' } } })
     const { data: { user } } = await authed.auth.getUser()
     if (!user) return json({ error: 'Ikke logget ind.' }, 401)
-    const admin = createClient(url, srv, { auth: { persistSession: false } })
-    const { data: me } = await admin.from('udbud_members').select('role').eq('user_id', user.id).maybeSingle()
-    if (!me || me.role !== 'admin') return json({ error: 'Kun administratorer.' }, 403)
+    // Adminrollen tjekkes med brugerens egen adgang (samme regel som i databasen)
+    const { data: isAdmin, error: ea } = await authed.rpc('udbud_is_admin')
+    if (ea) return json({ error: 'Kunne ikke tjekke rolle: ' + ea.message }, 500)
+    if (!isAdmin) return json({ error: 'Kun administratorer.' }, 403)
+    if (!srv) return json({ error: 'Serverens hemmelige nøgle mangler.' }, 500)
+    const admin = createClient(url, srv, { auth: { persistSession: false, autoRefreshToken: false } })
 
     const b = await req.json().catch(() => ({}))
     const role = b.role === 'admin' ? 'admin' : 'member'
