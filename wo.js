@@ -48,13 +48,14 @@
   function open(id) { CUR = id; const d = dlg(); msg(''); show(); if (!d.open) d.showModal(); if (!parsed(S.udbud.find(x => x.id === id))) generate() }
 
   /* ---------- udbudstekst ---------- */
-  async function tenderText(u) {
+  async function tenderText(u, say) {
+    say = say || (() => {});
     if (u.docText && String(u.docText).length > 800) return String(u.docText);
     const files = (u.files || []).filter(f => f.fileId && /\.(pdf|docx)$/i.test(f.fileName || '') && !SKIP.test(f.fileName || ''));
     files.sort((a, b) => (PRIO.test(b.fileName) ? 1 : 0) - (PRIO.test(a.fileName) ? 1 : 0));
     let out = '', n = 0;
     for (const f of files.slice(0, 8)) {
-      n++; msg(`Læser udbudsmaterialet (${n} af ${Math.min(files.length, 8)}): ${f.fileName}`);
+      n++; say(`Læser udbudsmaterialet (${n} af ${Math.min(files.length, 8)}): ${f.fileName}`);
       try {
         const url = await UB.blobUrl(f.fileId), blob = await (await fetch(url)).blob();
         const { text } = await fileText(new File([blob], f.fileName, { type: blob.type }), true);
@@ -72,10 +73,16 @@
     const u = S.udbud.find(x => x.id === CUR); if (!u || BUSY) return;
     if (!SAMPLE) return msg('AI er ikke tilgængelig.', 'bad');
     BUSY = true; show();
-    try {
-      const text = await tenderText(u);
+    try { const n = await genFor(u, msg); msg(n > 1 ? `Udbuddet efterspørger ${n} roller – der er et oplæg til hver.` : '') }
+    catch (e) { msg('Kunne ikke lave oplægget: ' + (e.message || e), 'bad') }
+    BUSY = false; show();
+  }
+  async function genFor(u, say) {
+    say = say || (() => {});
+    {
+      const text = await tenderText(u, say);
       if (text.length < 300 && !u.desc && !u.must) throw new Error('Der er ikke noget udbudsmateriale at læse. Upload udbuddets dokumenter (PDF eller Word) først.');
-      msg('Skriver oplægget … (typisk 20-60 sekunder)');
+      say('Skriver oplægget … (typisk 20-60 sekunder)');
       const prompt = `Du skriver et oplæg til potentielle konsulenter/kandidater for den danske konsulentvirksomhed OS Group, ud fra et udbud. Kandidaten skal kunne læse, hvad opgaven går ud på, og hvilke krav der stilles til uddannelse, erfaring osv.
 
 REGLER
@@ -97,21 +104,21 @@ REGLER
   sprog: krav til sprog.
   certificering: krav til certifikater, godkendelser, sikkerhedsgodkendelse eller kurser.
   profil: 2-4 punkter, der opsummerer den efterspurgte profil, udelukkende ud fra materialet.
+  intro: 1-2 sætninger til et jobopslag, der fortæller, hvad rollen går ud på (uden kundens navn).
 
-Returnér KUN JSON: {"roles":[{"titel":"","opgaver":[],"arbejdssted":[],"periode":[],"forlaengelse":[],"omfang":[],"uddannelse":[],"erfaring":[],"fordel":[],"sprog":[],"certificering":[],"profil":[]}]}
+Returnér KUN JSON: {"roles":[{"titel":"","intro":"","opgaver":[],"arbejdssted":[],"periode":[],"forlaengelse":[],"omfang":[],"uddannelse":[],"erfaring":[],"fordel":[],"sprog":[],"certificering":[],"profil":[]}]}
 
 UDBUD: ${u.title}${u.period ? '\nPeriode (fra platformen): ' + u.period : ''}${u.location ? '\nSted (fra platformen): ' + u.location : ''}${u.desc ? '\nBeskrivelse: ' + u.desc : ''}
 
 UDBUDSMATERIALE:
 ${text || '(ingen dokumenttekst)'}`;
       const j = await SAMPLE.json(prompt, { modelTier: 'default' });
-      const roles = (j && Array.isArray(j.roles) ? j.roles : []).map(r => { const o = { titel: String(r.titel || '').trim() }; SECTIONS.forEach(([k]) => (o[k] = arr(r[k]))); return o }).filter(r => r.titel || r.opgaver.length);
+      const roles = (j && Array.isArray(j.roles) ? j.roles : []).map(r => { const o = { titel: String(r.titel || '').trim(), intro: String(r.intro || '').trim() }; SECTIONS.forEach(([k]) => (o[k] = arr(r[k]))); return o }).filter(r => r.titel || r.opgaver.length);
       if (!roles.length) throw new Error('AI fandt ingen roller i udbuddet.');
-      await upd('udbud', u.id, { wo: JSON.stringify({ roles, at: Date.now() }) });
-      u.wo = JSON.stringify({ roles, at: Date.now() });
-      msg(roles.length > 1 ? `Udbuddet efterspørger ${roles.length} roller – der er et oplæg til hver.` : '');
-    } catch (e) { msg('Kunne ikke lave oplægget: ' + (e.message || e), 'bad') }
-    BUSY = false; show();
+      const wo = JSON.stringify({ roles, at: Date.now() });
+      await upd('udbud', u.id, { wo }); u.wo = wo;
+      return roles.length;
+    }
   }
 
   /* ---------- Word ---------- */
@@ -160,11 +167,26 @@ ${text || '(ingen dokumenttekst)'}`;
         ]
       });
       const blob = await D.Packer.toBlob(doc);
-      const name = ('OS Group - ' + (r.titel || u.title)).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 90) + '.docx';
+      const many = W.roles.length > 1;
+      const name = ('OS Group Oplæg - ' + u.title + (many ? ' - ' + (r.titel || (i + 1)) : '')).replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 90) + '.docx';
       const dl = await claude.use('downloads'); await dl.save({ filename: name, data: blob });
       msg('');
     } catch (e) { msg('Kunne ikke lave Word-filen: ' + (e.message || e), 'bad') }
   }
+
+  /* Baggrund: lav oplæg til aktive udbud, der mangler et (bruges også til hjemmesidens jobopslag) */
+  const ACTIVE = ['NYT', 'VALGT', 'MATCHET', 'OPLÆG_GENERERET', 'Ny', 'Under udarbejdelse'];
+  const tried = new Set();
+  async function autoTick() {
+    if (BUSY || !window.UB || !UB.isAdmin || !SAMPLE || typeof S === 'undefined') return;
+    const today = new Date().toISOString().slice(0, 10);
+    const u = S.udbud.find(x => !x.wo && !tried.has(x.id) && ACTIVE.includes(x.status) && (!x.deadline || x.deadline >= today) && ((x.files || []).length || x.docText));
+    if (!u) return;
+    tried.add(u.id); BUSY = true;
+    try { await genFor(u); console.info('Word-oplæg lavet automatisk:', u.title) } catch (e) { console.warn('Automatisk oplæg fejlede for', u.title, e) }
+    BUSY = false; if (CUR === u.id && document.getElementById('dW')?.open) show();
+  }
+  setInterval(autoTick, 45000); setTimeout(autoTick, 15000);
 
   /* Overtag knappen "Word-oplæg" på hvert udbud */
   window.owf = () => true;
