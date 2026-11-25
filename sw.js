@@ -1,5 +1,5 @@
 // Enkel service worker: gør siden installerbar og giver hurtig opstart. Data hentes altid live.
-const V='udbud-v4',SHELL=['./','index.html','ub.js','ub.css','config.js','logo.png','manifest.webmanifest','wo.js'];
+const V='udbud-v5',SHELL=['./','index.html','ub.js','ub.css','config.js','logo.png','manifest.webmanifest','wo.js?v=5'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin)return;

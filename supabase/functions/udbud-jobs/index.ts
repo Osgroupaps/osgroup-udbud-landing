@@ -6,7 +6,7 @@ const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } })
 const ACTIVE = ['NYT', 'VALGT', 'MATCHET', 'OPLÆG_GENERERET', 'Ny', 'Under udarbejdelse']
 const MDR = ['januar', 'februar', 'marts', 'april', 'maj', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'december']
-const arr = (v: unknown) => (Array.isArray(v) ? v : []).map(x => String(x).trim()).filter(x => x && !/^ikke angivet\.?$/i.test(x))
+const arr = (v: unknown) => (Array.isArray(v) ? v : []).map(x => String(x).replace(/^\s*↳\s*/, '').trim()).filter(x => x && !/^ikke angivet\.?$/i.test(x))
 const slug = (s: string) => s.toLowerCase().replace(/æ/g, 'ae').replace(/ø/g, 'oe').replace(/å/g, 'aa').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60)
 const dkDate = (d: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || ''); return m ? `${+m[3]}. ${MDR[+m[2] - 1]} ${m[1]}` : '' }
 const short = (s: string) => { const t = s.split(/(?<=[a-zæøå])\.\s|;/i)[0].replace(/\.$/, '').trim(); return t.length > 70 ? t.slice(0, 67).trim() + '…' : t }
@@ -45,7 +45,7 @@ Deno.serve(async req => {
         jobs.push({
           id: slug(titel) + '-' + slug(row.id).slice(0, 8) + (W!.roles!.length > 1 ? '-' + (i + 1) : ''),
           source: 'udbud:' + row.id,
-          title: titel,
+          title: titel + (Number(r.antal) > 1 ? ` (${Number(r.antal)} personer)` : ''),
           location: sted.length ? short(sted[0]) : (u.location ? short(String(u.location)) : 'Efter aftale'),
           deadline: dkDate(String(u.deadline || '')),
           intro: String(r.intro || '').trim() || opg[0] || '',
