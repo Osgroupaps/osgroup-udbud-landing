@@ -215,7 +215,7 @@ function udbud(){
   <div class="um">${u.client?esc(u.client)+" · ":""}Frist: ${edF(u,"deadline",`<b>${u.deadline?dkd(u.deadline):"Ingen frist"}</b>${u.deadline&&!u.deadlineOk?" (ubekræftet)":""}`,"date")} ${ACT.includes(st(u))&&u.deadline?dl(u):""}</div><div class="um">Periode: ${edF(u,"period",`<b>${esc(u.period||"Ikke angivet")}</b>`)}${u.location?` · Sted: <b>${esc(u.location)}</b>`:""}</div>
   <div class="us">${nd} dokumenter · ${mc} CV-match${u.ref?" · "+esc(u.ref):""}</div>
   <div class="udb"><b>Opgavebeskrivelse</b><div>${esc(u.desc)||"Ingen beskrivelse endnu. Brug “Lav oplæg” til at få en kandidatbeskrivelse ud fra dokumenterne."}</div><div style="margin-top:6px">${tags(u.must).map(k=>`<span class="tag bad" title="Skal-krav">${esc(k)}</span>`).join("")}${tags(u.keywords).map(k=>`<span class="tag">${esc(k)}</span>`).join("")}${u.minExp?`<span class="tag">min. ${u.minExp} års erfaring</span>`:""}</div></div>
-  <div class="ua"><button class="btn" data-m="${u.id}">Match CV-bank</button><button class="btn g" data-o="${u.id}">Lav oplæg</button>${owf(u)?`<button class="btn g" data-ow="${u.id}">Download Word-oplæg</button>`:`<button class="btn g" disabled>Ingen Word endnu</button>`}<button class="btn g" data-jx="${u.id}">Søg Jobindex</button><button class="btn g" data-lx="${u.id}">${S.lx===u.id?"Skjul LinkedIn":"Søg LinkedIn"}</button><button class="btn g" data-job="${u.id}">Jobopslag</button><button class="btn g" data-dx="${u.id}">${S.dx===u.id?"Skjul dokumenter":"Vis dokumenter og CV-match"}</button></div>
+  <div class="ua"><button class="btn" data-m="${u.id}">Match CV-bank</button><button class="btn g" data-o="${u.id}">Lav oplæg</button>${owf(u)?`<button class="btn g" data-ow="${u.id}">Word-oplæg</button>`:`<button class="btn g" disabled>Ingen Word endnu</button>`}<button class="btn g" data-jx="${u.id}">Søg Jobindex</button><button class="btn g" data-lx="${u.id}">${S.lx===u.id?"Skjul LinkedIn":"Søg LinkedIn"}</button><button class="btn g" data-job="${u.id}">Jobopslag</button><button class="btn g" data-dx="${u.id}">${S.dx===u.id?"Skjul dokumenter":"Vis dokumenter og CV-match"}</button></div>
   ${S.dx===u.id?dxPanel(u):""}${S.lx===u.id?lxPanel(u):""}
   <div class="uf"><select data-st="${u.id}">${STAT.map(s=>`<option value="${s}" ${s===st(u)?"selected":""}>${LBL[s]}</option>`).join("")}</select><button class="btn g s" data-setst="${u.id}:AFSENDT">Marker afsendt</button><button class="btn g s" data-setst="${u.id}:VUNDET">Vundet</button><button class="btn g s d" data-del="udbud:${u.id}">Slet udbud</button></div></div>`}).join(""):`<div class="card empty" style="grid-column:1/-1">Ingen udbud matcher.</div>`}</div>`;
 }
@@ -796,5 +796,6 @@ function printCv(d,c,lang,x){
 }
 init();
 </script>
+<script src="wo.js"></script>
 </body>
 </html>
