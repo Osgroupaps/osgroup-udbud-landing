@@ -199,12 +199,12 @@
       } else if (a === 'logout') { await sb.auth.signOut(); location.replace(location.pathname); }
       else if (a === 'users') openUsers();
       else if (a === 'uinvite') inviteUser();
-      else if (a === 'urole') userAction('role', t.dataset.id, { role: t.dataset.role });
-      else if (a === 'uresend') userAction('resend', t.dataset.id);
-      else if (a === 'uremove') { if (confirm('Fjern adgangen til udbudsplatformen for ' + t.dataset.name + '?')) userAction('remove', t.dataset.id) }
+      else if (a === 'urole') await userAction('role', t.dataset.id, { role: t.dataset.role }, t);
+      else if (a === 'uresend') await userAction('resend', t.dataset.id, null, t);
+      else if (a === 'uremove') { if (confirm('Fjern adgangen til udbudsplatformen for ' + t.dataset.name + '?')) await userAction('remove', t.dataset.id, null, t) }
       else if (a === 'uclose') $('#ub-users').close();
       else if (a === 'import') runImport();
-    } catch (err) { alert(err.message || err) }
+    } catch (err) { if (!/^(urole|uresend|uremove)$/.test(t.dataset.ub)) alert(err.message || err) }
   });
   document.addEventListener('change', e => { if (e.target && e.target.id === 'ub-ifile' && e.target.files[0]) runImport() });
   document.addEventListener('keydown', e => {
@@ -224,7 +224,7 @@
       <span class="tag ${m.role === 'admin' ? 'pri' : ''}">${m.role === 'admin' ? 'Administrator' : 'Bruger'}</span>
       ${m.user_id === UB.user.id ? '<small class="ub-me">Dig</small>' : `<div class="ub-uact">
         <button class="btn g s" data-ub="urole" data-id="${m.user_id}" data-role="${m.role === 'admin' ? 'member' : 'admin'}">${m.role === 'admin' ? 'Gør til bruger' : 'Gør til admin'}</button>
-        <button class="btn g s" data-ub="uresend" data-id="${m.user_id}">Send link igen</button>
+        <button class="btn g s" data-ub="uresend" data-id="${m.user_id}" data-email="${esc(m.email)}">Send link igen</button>
         <button class="btn g s d" data-ub="uremove" data-id="${m.user_id}" data-name="${esc(m.name || m.email)}">Fjern</button></div>`}</div>`).join('');
   }
   async function callUsers(body) {
@@ -243,10 +243,31 @@
     } finally { b.disabled = false; b.textContent = 'Invitér'; }
     openUsers();
   }
-  async function userAction(action, user_id, extra) {
-    const r = await callUsers({ action, user_id, ...(extra || {}) });
-    uMsg = action === 'resend' ? (r.reset ? 'Der er sendt et link til at vælge ny adgangskode.' : 'Invitationen er sendt igen.') : action === 'remove' ? 'Adgangen er fjernet.' : 'Rollen er ændret.';
-    openUsers();
+  /* Lille besked nederst på skærmen, så man kan se, at der er sket noget */
+  function toast(text, bad) {
+    let el = document.getElementById('ub-toast');
+    if (!el) { el = document.createElement('div'); el.id = 'ub-toast'; el.setAttribute('role', 'status');
+      el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483647;max-width:min(520px,92vw);padding:12px 18px;border-radius:12px;color:#fff;font:600 14px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:opacity .3s;pointer-events:none';
+      (document.querySelector('dialog[open]') || document.body).appendChild(el) }
+    else (document.querySelector('dialog[open]') || document.body).appendChild(el);
+    el.style.background = bad ? '#b42318' : '#1e7d4f'; el.textContent = text; el.style.opacity = '1';
+    clearTimeout(el._t); el._t = setTimeout(() => (el.style.opacity = '0'), 4500);
+  }
+  async function userAction(action, user_id, extra, btn) {
+    const old = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = action === 'resend' ? 'Sender …' : 'Arbejder …'; btn.style.opacity = '.7' }
+    let r;
+    try { r = await callUsers({ action, user_id, ...(extra || {}) }) }
+    catch (e) { if (btn) { btn.disabled = false; btn.textContent = old; btn.style.opacity = '' } toast('Det lykkedes ikke: ' + (e.message || e), true); throw e }
+    const who = btn && btn.dataset.email ? ' til ' + btn.dataset.email : '';
+    uMsg = action === 'resend' ? (r.reset ? `Der er sendt et link til at vælge ny adgangskode${who}.` : `Invitationen er sendt igen${who}.`) : action === 'remove' ? 'Adgangen er fjernet.' : 'Rollen er ændret.';
+    toast('✓ ' + uMsg);
+    await openUsers();
+    if (action === 'resend') {
+      const nb = document.querySelector(`[data-ub="uresend"][data-id="${user_id}"]`);
+      if (nb) { nb.textContent = '✓ Link sendt'; nb.disabled = true; nb.style.background = '#1e7d4f'; nb.style.color = '#fff'; nb.style.borderColor = '#1e7d4f';
+        setTimeout(() => { nb.textContent = 'Send link igen'; nb.disabled = false; nb.style.background = nb.style.color = nb.style.borderColor = '' }, 6000) }
+    }
   }
 
   /* ---------------- dataflytning fra Claude-portalen (kun admin) ---------------- */
