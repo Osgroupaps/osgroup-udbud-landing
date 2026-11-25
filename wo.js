@@ -179,7 +179,8 @@ ${text || '(ingen dokumenttekst)'}`;
         new D.Paragraph({ children: [run('Søstrupvej 14| 4300 Holbæk | CVR 46161556|', { size: 16 })] }),
         new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ children: [D.PageNumber.CURRENT, ' / ', D.PageNumber.TOTAL_PAGES], font: F, size: 18 })] })
       ] });
-      const page = { size: { width: 11906, height: 16838 }, margin: { top: 1300, bottom: 1300, left: 1300, right: 1300, footer: 500 } };
+      const header = new D.Header({ children: [new D.Paragraph({ alignment: D.AlignmentType.RIGHT, children: [new D.ImageRun({ type: 'png', data: logo, transformation: { width: 135, height: 45 } })] })] });
+      const page = { size: { width: 11906, height: 16838 }, margin: { top: 1500, bottom: 1300, left: 1300, right: 1300, header: 450, footer: 500 } };
       const title = W.roles.length === 1 ? (r0 => r0.titel || u.title)(W.roles[0]) : u.title;
       const doc = new D.Document({
         creator: 'OS Group', title: 'OS Group Oplæg - ' + u.title,
@@ -191,7 +192,7 @@ ${text || '(ingen dokumenttekst)'}`;
           { properties: { page: { ...page, margin: { top: 0, bottom: 0, left: 1300, right: 1300 } } }, children: [
             new D.Paragraph({ children: [
               new D.ImageRun({ type: 'jpg', data: cover, transformation: { width: 794, height: 1123 }, floating: { horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, offset: 0 }, verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, offset: 0 }, behindDocument: true, allowOverlap: true } }),
-              new D.ImageRun({ type: 'png', data: logo, transformation: { width: 150, height: 50 }, floating: { horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, offset: 5650000 }, verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, offset: 800000 }, allowOverlap: true } })
+              new D.ImageRun({ type: 'png', data: logo, transformation: { width: 300, height: 100 }, floating: { horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, offset: 4200000 }, verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, offset: 650000 }, allowOverlap: true } })
             ] }),
             new D.Paragraph({ spacing: { before: 4000 }, children: [run('UDBUD', { bold: true, size: 26, color: '4A4F57', characterSpacing: 120 })] }),
             new D.Paragraph({ spacing: { before: 60 }, children: [run('Titel', { size: 22, color: '4A4F57' })] }),
@@ -199,7 +200,7 @@ ${text || '(ingen dokumenttekst)'}`;
             ...(many ? [new D.Paragraph({ spacing: { before: 200 }, children: [run(`Søger ${N} personer`, { bold: true, size: 26, color: '2B3138' })] }),
               ...W.roles.map(r => new D.Paragraph({ spacing: { before: 20 }, children: [run(`${antal(r)} × ${r.titel || u.title}`, { size: 22, color: '2B3138' })] }))] : [])
           ] },
-          { properties: { page }, footers: { default: footer }, children: body.length ? body : [new D.Paragraph('')] }
+          { properties: { page }, headers: { default: header }, footers: { default: footer }, children: body.length ? body : [new D.Paragraph('')] }
         ]
       });
       const blob = await D.Packer.toBlob(doc);
