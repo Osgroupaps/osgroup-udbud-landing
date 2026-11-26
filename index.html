@@ -234,7 +234,7 @@ function cv(){
   <div class="cvk">${tags(c.skills).slice(0,8).map(k=>`<span>${esc(k)}</span>`).join("")}</div>
   ${c.note?`<div class="tag warn" style="margin-top:8px;white-space:normal" title="${esc(c.note)}">ℹ ${esc(c.note)}</div>`:""}
   <div class="cva"><div class="cvl">Download originalt CV</div>${fl(c)||`<span class="cvh">Ingen fil</span>`}
-  <div class="cvl">Generér OS Group-CV til gennemgang</div><div class="cvh" style="margin-bottom:6px">Kun den valgte fil genereres ved dit klik. Ingen automatisk generering af CV-banken.</div><button class="btn s" data-x="${c.id}">Generér Word-CV · udbuds-CV</button>${chkBadge(c)}${profBtn(c)}</div></div>`).join(""):`<div class="card empty" style="grid-column:1/-1">Ingen CV’er fundet.</div>`}</div>`;
+  <div class="cvl">Generér OS Group-CV til gennemgang</div><div class="cvh" style="margin-bottom:6px">Kun den valgte fil genereres ved dit klik. Ingen automatisk generering af CV-banken.</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn s" data-x="${c.id}" data-xl="da">Generér Word-CV · dansk</button><button class="btn s" data-x="${c.id}" data-xl="en">Generér Word-CV · engelsk</button></div>${chkBadge(c)}${profBtn(c)}</div></div>`).join(""):`<div class="card empty" style="grid-column:1/-1">Ingen CV’er fundet.</div>`}</div>`;
 }
 const has=(c,t)=>{t=t.toLowerCase();return tags(c.skills).some(s=>{s=s.toLowerCase();return s.includes(t)||t.includes(s)})||String(c.bio||"").toLowerCase().includes(t)||String(c.text||"").toLowerCase().includes(t)};
 function owf(u){return !!(u.offerda||u.offeren||(u.files||[]).some(f=>/oplæg|oplaeg|tilbud/i.test(f.fileName)&&/\.docx?$/i.test(f.fileName)))}
@@ -304,7 +304,7 @@ document.addEventListener("click",async e=>{
   else if(t.dataset.a==="nyC"){["cN","cT","cE","cK","cB","cM","cF","cNr","cG"].forEach(i=>$("#"+i).value="");$("#cDrop").firstChild.textContent="Træk fil hertil eller klik for at vælge";PEND=null;$("#cX").hidden=true;$("#dC").showModal()}
   else if(t.dataset.m)match(t.dataset.m);
   else if(t.dataset.del){const[c,id]=t.dataset.del.split(":");del(c,id)}
-  else if(t.dataset.k)showChk(t.dataset.k);else if(t.dataset.o)openOffer(t.dataset.o);else if(t.dataset.x)openCvX(t.dataset.x);else if(t.id==="oGen")genOffer();else if(t.id==="oSave")saveOffer();else if(t.id==="oDoc")offerDoc();else if(t.id==="oCopy"){navigator.clipboard?.writeText($("#oT").value);t.textContent="Kopieret ✓"}else if(t.id==="xGo")genCv();
+  else if(t.dataset.k)showChk(t.dataset.k);else if(t.dataset.o)openOffer(t.dataset.o);else if(t.dataset.x)openCvX(t.dataset.x,t.dataset.xl);else if(t.id==="oGen")genOffer();else if(t.id==="oSave")saveOffer();else if(t.id==="oDoc")offerDoc();else if(t.id==="oCopy"){navigator.clipboard?.writeText($("#oT").value);t.textContent="Kopieret ✓"}else if(t.id==="xGo")genCv();
   else if(t.id==="uSave"){if(!$("#uT").value.trim()||!$("#uD").value)return alert("Udfyld titel og tilbudsfrist.");t.disabled=true;
     const f=await up($("#uF").files[0]);let docText="";try{docText=(await fileText($("#uF").files[0],1)).text.slice(0,30000)}catch(e){}await add("udbud",{title:$("#uT").value.trim(),client:$("#uO").value.trim(),ref:$("#uR").value.trim(),deadline:$("#uD").value,deadlineOk:$("#uC").checked,value:+$("#uV").value||0,status:$("#uS").value,must:$("#uM").value,keywords:$("#uK").value,minExp:+$("#uX").value||0,desc:$("#uB").value.trim(),docText,...f});t.disabled=false;$("#dU").close();S.fs="Aktive";go("udbud")}
   else if(t.id==="cSave"){if(!$("#cN").value.trim()||!$("#cT").value.trim()||!$("#cK").value.trim())return alert("Udfyld navn, titel og kompetencer.");t.disabled=true;
@@ -438,7 +438,9 @@ async function saveBlob(blob,name){
   if(!DL){alert("Download er ikke tilgængeligt i denne visning.");return false}
   try{await DL.save({filename:name,data:blob});return true}catch(e){if(e.code!=="declined")alert("Kunne ikke gemme filen: "+(e.message||e.code));return false}
 }
-function openCvX(id){CURC=id;const c=S.cvs.find(x=>x.id===id);$("#xTitle").textContent="Word-CV: "+c.name+" ("+cvn(c.cvNumber)+")";
+function xLang(){const da=$("#xL").value==="da";$("#xGo").textContent=da?"Generér dansk Word-CV":"Generér engelsk Word-CV";return da}
+document.addEventListener("change",e=>{if(e.target.id!=="xL")return;const da=xLang(),t=$("#xTitle");t.textContent=t.textContent.replace(/\((dansk|engelsk)\)/,"("+(da?"dansk":"engelsk")+")")});
+function openCvX(id,lang){CURC=id;const c=S.cvs.find(x=>x.id===id);if(lang)$("#xL").value=lang;const da=xLang();$("#xTitle").textContent="Word-CV ("+(da?"dansk":"engelsk")+"): "+c.name+" ("+cvn(c.cvNumber)+")";
   $("#xU").innerHTML='<option value="">Ingen tilpasning</option>'+S.udbud.filter(u=>ACT.includes(st(u))).map(u=>`<option value="${u.id}">${esc(u.title)}</option>`).join("");
   const x=$("#xS");x.hidden=!!c.profile;x.textContent="Dette CV er uploadet uden automatisk udtræk – Word-CV’et bygges kun af navn, titel, kompetencer og profil.";$("#dX").showModal()}
 async function genCv(compact,fmt){
