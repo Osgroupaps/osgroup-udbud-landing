@@ -134,6 +134,7 @@ input,select,textarea{border-radius:10px;border:1px solid var(--line);background
 <div class="f"><label>Kort profil</label><textarea id="cB" rows="3"></textarea></div>
 </div><div class="mf"><button class="btn g" data-close>Annuller</button><button class="btn" id="cSave">Gem CV</button></div></dialog>
 
+<dialog id="dMail"><div class="mh" id="mlTitle">Send mail til kandidat</div><div class="mb"><div class="h"><label>Til</label><input id="mlTo" type="email" placeholder="kandidat@eksempel.dk"></div><div class="h"><label>Udbud / opgave</label><select id="mlU"></select></div><div class="f"><label>Emne</label><input id="mlS"></div><div class="f"><label>Tekst</label><textarea id="mlT" rows="14"></textarea></div><div class="f note" id="mlN" hidden></div></div><div class="mf"><button class="btn g" data-close>Luk</button><button class="btn g" id="mlAI">Skriv personligt med AI</button><button class="btn" id="mlGo">Send mail</button></div></dialog>
 <dialog id="dM"><div class="mh" id="mTitle">Match</div><div class="mb blk" id="mBody"></div><div class="mf"><button class="btn g" data-close>Luk</button></div></dialog>
 
 <dialog id="dJ" style="width:min(860px,96vw)"><div class="mh">Jobopslag til osgroup.dk</div><div class="mb blk">
@@ -234,7 +235,7 @@ function cv(){
   <div class="cvk">${tags(c.skills).slice(0,8).map(k=>`<span>${esc(k)}</span>`).join("")}</div>
   ${c.note?`<div class="tag warn" style="margin-top:8px;white-space:normal" title="${esc(c.note)}">ℹ ${esc(c.note)}</div>`:""}
   <div class="cva"><div class="cvl">Download originalt CV</div>${fl(c)||`<span class="cvh">Ingen fil</span>`}
-  <div class="cvl">Generér OS Group-CV til gennemgang</div><div class="cvh" style="margin-bottom:6px">Kun den valgte fil genereres ved dit klik. Ingen automatisk generering af CV-banken.</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn s" data-x="${c.id}" data-xl="da">Generér Word-CV · dansk</button><button class="btn s" data-x="${c.id}" data-xl="en">Generér Word-CV · engelsk</button></div>${chkBadge(c)}${profBtn(c)}</div></div>`).join(""):`<div class="card empty" style="grid-column:1/-1">Ingen CV’er fundet.</div>`}</div>`;
+  <div class="cvl">Generér OS Group-CV til gennemgang</div><div class="cvh" style="margin-bottom:6px">Kun den valgte fil genereres ved dit klik. Ingen automatisk generering af CV-banken.</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn s" data-x="${c.id}" data-xl="da">Generér Word-CV · dansk</button><button class="btn s" data-x="${c.id}" data-xl="en">Generér Word-CV · engelsk</button><button class="btn g s" data-mail="${c.id}">Send mail til kandidat</button></div>${chkBadge(c)}${profBtn(c)}</div></div>`).join(""):`<div class="card empty" style="grid-column:1/-1">Ingen CV’er fundet.</div>`}</div>`;
 }
 const has=(c,t)=>{t=t.toLowerCase();return tags(c.skills).some(s=>{s=s.toLowerCase();return s.includes(t)||t.includes(s)})||String(c.bio||"").toLowerCase().includes(t)||String(c.text||"").toLowerCase().includes(t)};
 function owf(u){return !!(u.offerda||u.offeren||(u.files||[]).some(f=>/oplæg|oplaeg|tilbud/i.test(f.fileName)&&/\.docx?$/i.test(f.fileName)))}
@@ -277,7 +278,7 @@ function match(id){
   const u=S.udbud.find(x=>x.id===id),M=tags(u.must),N=tags(u.keywords);
   const R=rank(u);
   $("#mTitle").textContent="Match: "+u.title;
-  $("#mBody").innerHTML=(!M.length&&!N.length)?`<div class="empty">Tilføj skal-krav eller bør-krav til udbuddet for at få match.</div>`:R.length?R.map(r=>`<div class="row"><div class="av">${esc(r.c.name[0])}</div><div class="g"><div class="t">${esc(r.c.name)} <span class="tag">${cvn(r.c.cvNumber)}</span> <span class="tag ${r.q?"ok":"bad"}">${r.q?"Kvalificeret":"Ikke kvalificeret"}</span> <span class="tag pri">Score ${r.score}</span></div><div class="m">${esc(r.c.role)} · ${esc(r.c.avail)} · ${r.c.exp||0} års erfaring</div><div>${r.mh.map(h=>`<span class="tag ok">✓ ${esc(h)}</span>`).join("")}${r.nh.map(h=>`<span class="tag pri">${esc(h)}</span>`).join("")}${r.miss.map(h=>`<span class="tag bad">Mangler: ${esc(h)}</span>`).join("")}${r.exOk?"":`<span class="tag bad">Under ${u.minExp} års erfaring</span>`}</div></div></div>`).join(""):`<div class="empty">Ingen CV’er matcher endnu.</div>`;
+  $("#mBody").innerHTML=(!M.length&&!N.length)?`<div class="empty">Tilføj skal-krav eller bør-krav til udbuddet for at få match.</div>`:R.length?R.map(r=>`<div class="row"><div class="av">${esc(r.c.name[0])}</div><div class="g"><div class="t">${esc(r.c.name)} <span class="tag">${cvn(r.c.cvNumber)}</span> <span class="tag ${r.q?"ok":"bad"}">${r.q?"Kvalificeret":"Ikke kvalificeret"}</span> <span class="tag pri">Score ${r.score}</span></div><div class="m">${esc(r.c.role)} · ${esc(r.c.avail)} · ${r.c.exp||0} års erfaring</div><div>${r.mh.map(h=>`<span class="tag ok">✓ ${esc(h)}</span>`).join("")}${r.nh.map(h=>`<span class="tag pri">${esc(h)}</span>`).join("")}${r.miss.map(h=>`<span class="tag bad">Mangler: ${esc(h)}</span>`).join("")}${r.exOk?"":`<span class="tag bad">Under ${u.minExp} års erfaring</span>`}</div><div style="margin-top:6px"><button class="btn g s" data-mail="${r.c.id}" data-mu="${u.id}">Send mail til kandidat</button></div></div></div>`).join(""):`<div class="empty">Ingen CV’er matcher endnu.</div>`;
   $("#dM").showModal();
 }
 async function up(file){
@@ -292,7 +293,7 @@ drop("#uDrop","#uF");drop("#cDrop","#cF");$("#cF").addEventListener("change",()=
 const go=v=>{S.view=v;S.q="";location.hash=v;render()};
 addEventListener("hashchange",()=>{S.view=location.hash.slice(1)||"overblik";render()});
 document.addEventListener("click",async e=>{
-  const t=e.target.closest("[data-v],[data-up],[data-p],[data-dl],[data-chip],[data-setst],[data-job],#jGen,#jSave,#jTxt,#jHtml,#jJson,[data-edit],[data-edsave],[data-a],[data-close],[data-m],[data-del],[data-open],[data-o],[data-x],[data-k],#oGen,#oSave,#oDoc,#oCopy,#xGo,#uSave,#cSave,[data-ow],[data-jx],[data-lx],[data-lxgen],[data-lxo],[data-lxc],[data-lxk],[data-lxs],[data-lxd],[data-dx],[data-ct],[data-sg],#sgGo,#sgJx");if(!t)return;
+  const t=e.target.closest("[data-mail],#mlGo,#mlAI,[data-v],[data-up],[data-p],[data-dl],[data-chip],[data-setst],[data-job],#jGen,#jSave,#jTxt,#jHtml,#jJson,[data-edit],[data-edsave],[data-a],[data-close],[data-m],[data-del],[data-open],[data-o],[data-x],[data-k],#oGen,#oSave,#oDoc,#oCopy,#xGo,#uSave,#cSave,[data-ow],[data-jx],[data-lx],[data-lxgen],[data-lxo],[data-lxc],[data-lxk],[data-lxs],[data-lxd],[data-dx],[data-ct],[data-sg],#sgGo,#sgJx");if(!t)return;
   if(t.dataset.ow)owDl(t.dataset.ow);else if(t.dataset.jx)jxOpen(t.dataset.jx);else if(t.dataset.lx){S.lx=S.lx===t.dataset.lx?null:t.dataset.lx;render()}else if(t.dataset.lxgen)lxGen(t.dataset.lxgen);else if(t.dataset.lxs)lxScore(t.dataset.lxs);else if(t.dataset.lxo||t.dataset.lxc){const[a,b]=(t.dataset.lxo||t.dataset.lxc).split(":"),P=lxJ(S.udbud.find(x=>x.id===a)?.liPlan),q=P?.searches?.[+b]?.query;if(q){if(t.dataset.lxo){lxCopy(q);window.open(lxUrl(q),"_blank")}else lxCopy(q)}}else if(t.dataset.lxk){lxCopy(lxJ(S.udbud.find(x=>x.id===t.dataset.lxk)?.liPlan)?.outreach||"")}else if(t.dataset.lxd){const[a,b,c]=t.dataset.lxd.split(":");lxCand(a,+b,c)}else if(t.dataset.dx){S.dx=S.dx===t.dataset.dx?null:t.dataset.dx;render();document.getElementById("u"+t.dataset.dx)?.scrollIntoView({block:"nearest"})}
   else if(t.dataset.ct){const c=S.cvs.find(x=>x.id===t.dataset.ct);await upd("cvs",c.id,{contacted:!c.contacted,contactedAt:c.contacted?"":new Date().toISOString().slice(0,10)})}
   else if(t.id==="sgGo"){S.sg={q:$("#sgQ").value,t:$("#sgT").value,k:$("#sgK").value,e:+$("#sgE").value||0};render()}
@@ -304,7 +305,7 @@ document.addEventListener("click",async e=>{
   else if(t.dataset.a==="nyC"){["cN","cT","cE","cK","cB","cM","cF","cNr","cG"].forEach(i=>$("#"+i).value="");$("#cDrop").firstChild.textContent="Træk fil hertil eller klik for at vælge";PEND=null;$("#cX").hidden=true;$("#dC").showModal()}
   else if(t.dataset.m)match(t.dataset.m);
   else if(t.dataset.del){const[c,id]=t.dataset.del.split(":");del(c,id)}
-  else if(t.dataset.k)showChk(t.dataset.k);else if(t.dataset.o)openOffer(t.dataset.o);else if(t.dataset.x)openCvX(t.dataset.x,t.dataset.xl);else if(t.id==="oGen")genOffer();else if(t.id==="oSave")saveOffer();else if(t.id==="oDoc")offerDoc();else if(t.id==="oCopy"){navigator.clipboard?.writeText($("#oT").value);t.textContent="Kopieret ✓"}else if(t.id==="xGo")genCv();
+  else if(t.dataset.k)showChk(t.dataset.k);else if(t.dataset.o)openOffer(t.dataset.o);else if(t.dataset.x)openCvX(t.dataset.x,t.dataset.xl);else if(t.dataset.mail)openMail(t.dataset.mail,t.dataset.mu);else if(t.id==="mlGo")sendMail();else if(t.id==="mlAI")aiMail();else if(t.id==="oGen")genOffer();else if(t.id==="oSave")saveOffer();else if(t.id==="oDoc")offerDoc();else if(t.id==="oCopy"){navigator.clipboard?.writeText($("#oT").value);t.textContent="Kopieret ✓"}else if(t.id==="xGo")genCv();
   else if(t.id==="uSave"){if(!$("#uT").value.trim()||!$("#uD").value)return alert("Udfyld titel og tilbudsfrist.");t.disabled=true;
     const f=await up($("#uF").files[0]);let docText="";try{docText=(await fileText($("#uF").files[0],1)).text.slice(0,30000)}catch(e){}await add("udbud",{title:$("#uT").value.trim(),client:$("#uO").value.trim(),ref:$("#uR").value.trim(),deadline:$("#uD").value,deadlineOk:$("#uC").checked,value:+$("#uV").value||0,status:$("#uS").value,must:$("#uM").value,keywords:$("#uK").value,minExp:+$("#uX").value||0,desc:$("#uB").value.trim(),docText,...f});t.disabled=false;$("#dU").close();S.fs="Aktive";go("udbud")}
   else if(t.id==="cSave"){if(!$("#cN").value.trim()||!$("#cT").value.trim()||!$("#cK").value.trim())return alert("Udfyld navn, titel og kompetencer.");t.disabled=true;
@@ -696,6 +697,46 @@ async function profBatch(){
 
 
 /* ---------- Aktivitet i indeværende år ---------- */
+/* ---------- Send mail til kandidat ---------- */
+const JOBS_URL="https://www.osgroup.dk/aabne-stillinger";let CURM=null;
+function cvMail(c){const t=String(c.text||"")+" "+JSON.stringify(c.profile||"");return((t.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g)||[]).find(e=>!/osgroup\.dk$/i.test(e))||"")}
+function mailTpl(c,u){const fn=String(c.name||"").split(" ")[0]||"",me=(window.UB&&UB.member&&UB.member.name)||"OS Group",dd=u&&u.deadline?new Date(u.deadline).toLocaleDateString("da-DK",{day:"numeric",month:"long"}):"";
+  const subj=u?`${u.title} – har du lyst til at høre mere?`:"Spændende opgaver hos OS Group – har du lyst til at høre mere?";
+  const body=`Hej ${fn}
+
+Vi har dit CV i vores netværk hos OS Group, og vi har lige nu ${u?`en opgave, som vi tror kan passe til din profil: ${u.title}.`:"flere opgaver, som vi tror kan passe til din profil."}${dd?` Vi skal have kandidater på plads inden ${dd}.`:""}
+
+Du kan læse mere og se alle vores åbne stillinger her: ${JOBS_URL}
+
+Har du lyst til at høre mere? Så svar bare på denne mail, eller ring til os, så tager vi en uforpligtende snak.
+
+Venlig hilsen
+${me}
+OS Group · kontakt@osgroup.dk · osgroup.dk`;return{subj,body}}
+function fillMail(){const c=S.cvs.find(x=>x.id===CURM),u=S.udbud.find(x=>x.id===$("#mlU").value),t=mailTpl(c,u);$("#mlS").value=t.subj;$("#mlT").value=t.body}
+function openMail(id,uid){CURM=id;const c=S.cvs.find(x=>x.id===id);if(!c)return;
+  $("#mlTitle").textContent="Send mail til kandidat: "+c.name+" ("+cvn(c.cvNumber)+")";
+  $("#mlU").innerHTML='<option value="">Generelt – alle åbne stillinger</option>'+S.udbud.filter(u=>ACT.includes(st(u))).map(u=>`<option value="${u.id}">${esc(u.title)}</option>`).join("");
+  $("#mlU").value=uid||"";$("#mlTo").value=cvMail(c);fillMail();
+  const n=$("#mlN");n.hidden=!!$("#mlTo").value;n.textContent="Der står ingen e-mail i CV’et. Skriv kandidatens adresse i feltet Til.";
+  $("#mlGo").disabled=false;$("#mlGo").textContent="Send mail";document.querySelector("dialog[open]")?.close();$("#dMail").showModal()}
+document.addEventListener("change",e=>{if(e.target.id==="mlU")fillMail()});
+async function aiMail(){if(!SAMPLE)return alert("Claude-funktionen er ikke tilgængelig i denne visning.");const c=S.cvs.find(x=>x.id===CURM),u=S.udbud.find(x=>x.id===$("#mlU").value),b=$("#mlAI"),n=$("#mlN");
+  b.disabled=true;b.textContent="Skriver …";
+  try{const j=await SAMPLE.json(`Skriv en kort, venlig og personlig mail på dansk fra OS Group (teknisk konsulentformidling) til en kandidat fra vores CV-bank. Spørg om personen har lyst til at høre mere. Brug kun oplysninger fra DATA – opfind intet. Fremhæv 1-2 konkrete ting fra kandidatens erfaring, der passer til opgaven. Max 130 ord i brødteksten. Tiltal med fornavn. Linket ${JOBS_URL} SKAL stå i teksten. Afslut med denne underskrift præcis: ${JSON.stringify(mailTpl(c,u).body.split("Venlig hilsen")[1].trim())} efter "Venlig hilsen". Returnér KUN JSON: {"subject":"...","text":"..."}
+DATA:
+KANDIDAT: ${JSON.stringify({navn:c.name,titel:c.role,erfaring:c.exp,kompetencer:c.skills,profil:c.bio||"",cv:String(c.text||"").slice(0,4000)})}
+OPGAVE: ${u?JSON.stringify({titel:u.title,frist:u.deadline||"",krav:u.must||"",ønsker:u.keywords||"",beskrivelse:String(u.desc||u.docText||"").slice(0,2500)}):"Generel henvendelse om vores åbne stillinger"}`);
+    if(j&&j.text){$("#mlS").value=String(j.subject||$("#mlS").value);let t=String(j.text);if(!t.includes(JOBS_URL))t=t.replace(/\n\nVenlig hilsen/,`\n\nSe alle vores åbne stillinger her: ${JOBS_URL}\n\nVenlig hilsen`);$("#mlT").value=t}}
+  catch(e){n.hidden=false;n.textContent="AI kunne ikke skrive mailen: "+e.message}finally{b.disabled=false;b.textContent="Skriv personligt med AI"}}
+async function sendMail(){const c=S.cvs.find(x=>x.id===CURM),to=$("#mlTo").value.trim(),subject=$("#mlS").value.trim(),text=$("#mlT").value,b=$("#mlGo"),n=$("#mlN");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to))return alert("Skriv en gyldig e-mail i feltet Til.");
+  if(!text.includes(JOBS_URL)&&!confirm("Linket til åbne stillinger er ikke med i teksten. Send alligevel?"))return;
+  b.disabled=true;b.textContent="Sender …";n.hidden=true;
+  try{const {data,error}=await UB.sb.functions.invoke("udbud-mail",{body:{to,subject,text}});
+    if(error||!data||data.error){let m=(data&&data.error)||(error&&error.message)||"Ukendt fejl";try{const j=await error.context.json();if(j&&j.error)m=j.error}catch(_){}throw new Error(m)}
+    logEv("mail_sent",c,{to,udbud:$("#mlU").value||"",subject});b.textContent="Sendt ✓";n.hidden=false;n.textContent=`Mailen er sendt til ${to} fra ${data.from}. Svar går til ${data.replyTo}.`}
+  catch(e){b.disabled=false;b.textContent="Send mail";n.hidden=false;n.textContent=e.message}}
 function logEv(type,c,extra){
   const d=new Date(),o={type,ts:d.getTime(),y:d.getFullYear(),m:d.getMonth(),cvNumber:(c&&c.cvNumber)||0,name:(c&&c.name)||"",...(extra||{})};
   try{if(db)db.collection("events").add(o);else{S.events.push({id:"l"+o.ts,...o});}}catch(e){}

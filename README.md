@@ -8,5 +8,6 @@ Hostes på GitHub Pages. Login, data og filer ligger i OS Groups Supabase-projek
 - `supabase/schema.sql` – tabeller `udbud_docs`, `udbud_members`, bucket `udbud` og adgangsregler
 - `supabase/functions/udbud-invite` – invitér/fjern brugere (kun admin)
 - `supabase/functions/udbud-ai` – AI-funktionerne. Kræver secret `ANTHROPIC_API_KEY` i Supabase.
+- `supabase/functions/udbud-mail` – "Send mail til kandidat" via smtp.simply.com. Secrets: `MAIL_SMTP_USER`, `MAIL_SMTP_PASS` (valgfrit `MAIL_SMTP_PORT`, `MAIL_FROM_NAME`, `MAIL_REPLY_TO`).
 
 Ingen CV'er eller persondata ligger i dette repo.
